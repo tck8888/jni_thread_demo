@@ -73,17 +73,18 @@ Java_com_tck_jni_thread_ThreadTrain_mutexThread(JNIEnv *env, jobject thiz) {
     pthread_create(&custom, nullptr, customFunc, nullptr);
 }
 
-JavaVM *jvm;
+JavaVM *javaVM = nullptr;
 
-JavaListener *javaListener;
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
+    javaVM = vm;
+    return JNI_VERSION_1_6;
+}
+
 pthread_t childThread;
 
-
-
-void *childCallback(void *data)
-{
+void *childCallback(void *data) {
     auto *javaListener1 = (JavaListener *) data;
-    javaListener1->onError(101, "c++ call java method from child thread!",THREAD_CHILD);
+    javaListener1->onError(101, "c++ call java method from child thread!", THREAD_CHILD);
     pthread_exit(&childThread);
     return nullptr;
 }
@@ -92,16 +93,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_tck_jni_thread_ThreadTrain_callbackFromC(JNIEnv *env, jobject thiz) {
 
-    javaListener =   new JavaListener(jvm,env,thiz);
-    pthread_create(&childThread, nullptr,childCallback,javaListener);
+    auto javaListener = new JavaListener(javaVM, env, thiz);
+    pthread_create(&childThread, nullptr, childCallback, javaListener);
 }
 
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
-    JNIEnv *env;
-    jvm = vm;
-    if(vm->GetEnv((void **) &env, JNI_VERSION_1_6) != JNI_OK)
-    {
-        return -1;
-    }
-    return JNI_VERSION_1_6;
-}
