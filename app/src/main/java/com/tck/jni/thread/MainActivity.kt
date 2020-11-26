@@ -2,27 +2,55 @@ package com.tck.jni.thread
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.TextView
+import com.tck.jni.thread.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var threadTrain: ThreadTrain
+    private lateinit var binding: ActivityMainBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        // Example of a call to a native method
-        findViewById<TextView>(R.id.sample_text).text = stringFromJNI()
-    }
+        threadTrain = ThreadTrain()
 
-    /**
-     * A native method that is implemented by the 'native-lib' native library,
-     * which is packaged with this application.
-     */
-    external fun stringFromJNI(): String
+        threadTrain.setOnErrorListener(object : OnErrorListener {
+            override fun onError(code: Int, msg: String) {
+                Log.d("tck6666", "code:$code,msg:$msg")
+            }
+        })
 
-    companion object {
-        // Used to load the 'native-lib' library on application startup.
-        init {
-            System.loadLibrary("native-lib")
+        binding.btnNormalThread.setOnClickListener {
+            createNormalThread()
+
+        }
+
+        binding.btnMutexThread.setOnClickListener {
+            createMutexThread()
+        }
+
+        binding.btnCCallJava.setOnClickListener {
+            callBackFromC()
         }
     }
+
+
+    private fun createNormalThread() {
+        threadTrain.normalThread()
+    }
+
+    private fun createMutexThread() {
+        threadTrain.mutexThread()
+    }
+
+
+    private fun callBackFromC() {
+        threadTrain.callbackFromC()
+    }
+
+
 }
